@@ -1,4 +1,4 @@
-name: Docker & DB Mirgation CI Test
+name: Docker & DB Migration CI Test
 
 on:
   push:
@@ -19,29 +19,32 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # 3. Build containers
+      # 3. Build containers (clean build)
       - name: Build Docker Compose
-        run: docker compose build
+        run: docker compose build --no-cache
 
       # 4. Start services
       - name: Start services
-        run: docker compose up -d
+        run: docker compose up -d --build
 
-      # 5. Wait for Postgres
-      - name: Wait for Postgres
+      # 5. Wait for Postgres (reliable check)
+      - name: Wait for Postgres readiness
         run: |
-          echo "Waiting for Postgres..."
-          sleep 10
+          echo "Waiting for PostgreSQL..."
+          until docker compose exec -T postgres pg_isready -U postgres; do
+            echo "Postgres not ready yet..."
+            sleep 2
+          done
 
       # 6. Check containers
       - name: Check containers
         run: docker ps
 
-      # 7. Run migrations (IMPORTANT FIX)
+      # 7. Run migrations (FIXED - no npm script dependency)
       - name: Run migrations
-        run: docker compose run --rm express npm run db:migrate:up
+        run: docker compose run --rm express npx node-pg-migrate up
 
-      # 8. Verify migration worked (optional but good)
+      # 8. Verify migration worked
       - name: Verify DB schema
         run: |
           docker compose exec -T postgres psql -U postgres -d pg-tutorial -c "\dt"
