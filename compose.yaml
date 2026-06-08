@@ -1,0 +1,37 @@
+services:
+  express:
+    build: ./EXPRESS
+    ports:
+      - 3000:3000
+    depends_on:
+      - postgres
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+    volumes:
+      - ./EXPRESS:/app
+      - /app/node_modules
+
+  postgres:
+    image: postgres:17
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_USER=SDEG77-FREDMENSON
+      - POSTGRES_PASSWORD=kasdfugHGEDF-129&*$
+      - POSTGRES_DB=pg-tutorial
+    volumes:
+      - postgres_db:/var/lib/postgresql/data
+  
+  pgadmin:
+    image: dpage/pgadmin4
+    ports:
+      - 5050:80
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=sies.gabriel.au@phinmaed.com
+      - PGADMIN_DEFAULT_PASSWORD=OLUIKSbjikc!@#
+    depends_on:
+      - postgres
+    restart: always
+
+volumes:
+  postgres_db:
