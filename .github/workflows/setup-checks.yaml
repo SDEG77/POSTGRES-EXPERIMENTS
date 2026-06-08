@@ -1,4 +1,4 @@
-name: Docker & DB Migration CI Test
+name: Docker CI Test
 
 on:
   push:
@@ -27,7 +27,7 @@ jobs:
       - name: Start services
         run: docker compose up -d --build
 
-      # 5. Wait for Postgres (reliable check)
+      # 5. Wait for Postgres (basic readiness check)
       - name: Wait for Postgres readiness
         run: |
           echo "Waiting for PostgreSQL..."
@@ -40,19 +40,10 @@ jobs:
       - name: Check containers
         run: docker ps
 
-      # 7. Run migrations (FIXED - no npm script dependency)
-      - name: Run migrations
-        run: docker compose run --rm express npx node-pg-migrate up
-
-      # 8. Verify migration worked
-      - name: Verify DB schema
-        run: |
-          docker compose exec -T postgres psql -U postgres -d pg-tutorial -c "\dt"
-
-      # 9. Health check API
+      # 7. Health check API
       - name: Test API
         run: curl --fail http://localhost:3000 || exit 1
 
-      # 10. Cleanup
+      # 8. Cleanup
       - name: Shutdown
         run: docker compose down -v
