@@ -1,0 +1,55 @@
+name: Docker & DB Mirgation CI Test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout repo
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. Set up Docker
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # 3. Build containers
+      - name: Build Docker Compose
+        run: docker compose build
+
+      # 4. Start services
+      - name: Start services
+        run: docker compose up -d
+
+      # 5. Wait for Postgres
+      - name: Wait for Postgres
+        run: |
+          echo "Waiting for Postgres..."
+          sleep 10
+
+      # 6. Check containers
+      - name: Check containers
+        run: docker ps
+
+      # 7. Run migrations (IMPORTANT FIX)
+      - name: Run migrations
+        run: docker compose run --rm express npm run db:migrate:up
+
+      # 8. Verify migration worked (optional but good)
+      - name: Verify DB schema
+        run: |
+          docker compose exec -T postgres psql -U postgres -d pg-tutorial -c "\dt"
+
+      # 9. Health check API
+      - name: Test API
+        run: curl --fail http://localhost:3000 || exit 1
+
+      # 10. Cleanup
+      - name: Shutdown
+        run: docker compose down -v
